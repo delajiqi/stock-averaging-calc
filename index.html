@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>股票摊平计算器 Ultimate · 智能量化补仓与回本推演终端</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Fira Code', 'IBM Plex Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Dark Theme (Default) */
+  --bg-app: #0b0f19;
+  --bg-card: rgba(22, 30, 49, 0.75);
+  --bg-card-hover: rgba(28, 38, 62, 0.85);
+  --bg-input: #111827;
+  --bg-input-focus: #152033;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: #3b82f6;
+  --border-hover: rgba(255, 255, 255, 0.16);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-dim: #475569;
+
+  --accent-primary: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+
+  /* Stock Colors (Red Up / Green Down) */
+  --stock-up: #ef4444;
+  --stock-up-bg: rgba(239, 68, 68, 0.12);
+  --stock-up-border: rgba(239, 68, 68, 0.3);
+  --stock-down: #10b981;
+  --stock-down-bg: rgba(16, 185, 129, 0.12);
+  --stock-down-border: rgba(16, 185, 129, 0.3);
+  --stock-zero: #94a3b8;
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+[data-theme="light"] {
+  --bg-app: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-hover: rgba(255, 255, 255, 0.98);
+  --bg-input: #ffffff;
+  --bg-input-focus: #f8fafc;
+  --border: #e2e8f0;
+  --border-focus: #2563eb;
+  --border-hover: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-dim: #94a3b8;
+
+  --accent-primary: #2563eb;
+  --accent-glow: rgba(37, 99, 235, 0.15);
+  --accent-gradient: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+
+  --stock-up: #dc2626;
+  --stock-up-bg: rgba(220, 38, 38, 0.08);
+  --stock-up-border: rgba(220, 38, 38, 0.25);
+  --stock-down: #059669;
+  --stock-down-bg: rgba(5, 150, 105, 0.08);
+  --stock-down-border: rgba(5, 150, 105, 0.25);
+  --stock-zero: #64748b;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+  padding: 24px 16px 60px;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.08), transparent 30%),
+    radial-gradient(circle at 90% 85%, rgba(99, 102, 241, 0.06), transparent 30%);
+  background-attachment: fixed;
+}
+
+.container {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* Header & Top Bar */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 14px 22px;
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  background: var(--accent-gradient);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.brand-title h1 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-pro {
+  font-size: 0.68rem;
+  background: var(--accent-gradient);
+  color: #fff;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.brand-title p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+}
+.btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn-primary {
+  background: var(--accent-gradient);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+}
+.btn-ghost:hover {
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+
+/* Hero Dashboard Banner */
+.hero-dashboard {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+@media (max-width: 900px) {
+  .hero-dashboard { grid-template-columns: 1fr; }
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: var(--accent-gradient);
+}
+.kpi-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.kpi-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpi-label span {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+.kpi-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.kpi-val {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.kpi-badge {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+}
+.kpi-sub {
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.hero-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.stat-box {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.stat-box .s-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.stat-box .s-val {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.stat-box .s-sub {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+/* Insight Status Banner */
+.insight-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.insight-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-primary);
+  flex-shrink: 0;
+}
+.sentence {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* Two-Column Workspace Layout */
+.workspace {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  .workspace { grid-template-columns: 1fr; }
+}
+
+/* Card Panel Styling */
+.panel-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+  position: relative;
+}
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.panel-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title .num-badge {
+  width: 22px;
+  height: 22px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Price Strip / Current Price Input */
+.cur-control-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.cur-control-bar:focus-within {
+  border-color: var(--border-focus);
+}
+.cur-control-bar .cur-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  white-space: nowrap;
+}
+.cur-control-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 600;
+  min-width: 0;
+}
+.cur-note {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+/* Ledger Table */
+.ledger-container {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-input);
+  margin-bottom: 16px;
+}
+.ledger-head {
+  display: grid;
+  grid-template-columns: 74px 1fr 1fr 1fr 1fr 34px;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+.tx-row {
+  display: grid;
+  grid-template-columns: 74px 1fr 1fr 1fr 1fr 34px;
+  gap: 6px;
+  padding: 10px 12px;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s;
+  position: relative;
+}
+.tx-row:last-child {
+  border-bottom: none;
+}
+.tx-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.tx-row select.side {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 4px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+.tx-row input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  padding: 6px 8px;
+  border-radius: 6px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.tx-row input:focus {
+  border-color: var(--border-focus);
+}
+.tx-row .cell {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tx-row .cell small {
+  display: block;
+  font-size: 0.7rem;
+}
+.tx-row button.del {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tx-row button.del:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--stock-up);
+}
+.tx-info {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  padding-top: 4px;
+  margin-top: 2px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.05);
+}
+.tx-info.ph-only {
+  display: none;
+}
+
+/* Fee & Settings Accordion */
+.settings-drawer {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: 14px;
+  overflow: hidden;
+}
+.settings-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 16px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  width: 100%;
+  border: none;
+  outline: none;
+  text-align: left;
+}
+.settings-toggle:hover {
+  color: var(--text-primary);
+}
+.settings-content {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--border);
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.check-item input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+  width: 16px;
+  height: 16px;
+}
+.fee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.input-field label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.input-field input {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  outline: none;
+}
+.input-field input:focus {
+  border-color: var(--border-focus);
+}
+.note-text {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+/* Tabs for Right Column */
+.analytics-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: var(--bg-card);
+  padding: 5px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-btn.active {
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: block;
+}
+
+/* Price Ruler Canvas */
+.rule-wrap {
+  margin-bottom: 20px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+}
+.rule-wrap h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+#ruler {
+  position: relative;
+  width: 100%;
+  min-height: 110px;
+  overflow: visible;
+}
+.ruler {
+  position: relative;
+  width: 100%;
+}
+.r-line {
+  position: absolute;
+  left: 0; right: 0; height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+.r-band {
+  position: absolute;
+  height: 6px;
+  border-radius: 3px;
+  opacity: 0.6;
+}
+.r-band.up { background: var(--stock-up); }
+.r-band.down { background: var(--stock-down); }
+.r-stem {
+  position: absolute;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+.r-stem.faint {
+  background: rgba(255, 255, 255, 0.08);
+}
+.r-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -3px);
+  background: var(--text-primary);
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+}
+.r-dot.k-cur {
+  background: var(--accent-primary);
+  width: 12px; height: 12px;
+  transform: translate(-50%, -5px);
+  box-shadow: 0 0 10px var(--accent-primary);
+}
+.r-dot.k-be {
+  background: transparent;
+  border: 2px solid var(--text-primary);
+  width: 10px; height: 10px;
+  transform: translate(-50%, -4px);
+}
+.r-dot.sm {
+  width: 5px; height: 5px;
+  transform: translate(-50%, -1.5px);
+  background: var(--text-tertiary);
+}
+.r-lab {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-primary);
+  background: rgba(15, 23, 42, 0.85);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.r-lab.k-cur {
+  color: #60a5fa;
+  border-color: rgba(96, 165, 250, 0.4);
+}
+.r-lab.sm {
+  font-size: 0.68rem;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: none;
+}
+.legend {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin-top: 14px;
+  line-height: 1.4;
+}
+
+/* Metric Tiles Grid */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.tile {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.tile:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+.tile .k {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.tile .v {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.tile .was {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+/* Colors for Gains & Losses (A-Share Standard) */
+.up { color: var(--stock-up) !important; }
+.down { color: var(--stock-down) !important; }
+.zero { color: var(--stock-zero) !important; }
+.num.up { color: var(--stock-up); }
+.num.down { color: var(--stock-down); }
+
+/* Segmented Control */
+.seg {
+  display: inline-flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  gap: 4px;
+}
+.seg button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* What-If Grid */
+.wi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.wi-grid .f {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.wi-grid input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.wi-grid input:focus {
+  border-color: var(--border-focus);
+}
+
+/* Callout Note */
+.callout {
+  background: var(--bg-input);
+  border-left: 3px solid var(--accent-primary);
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.callout.bad {
+  border-left-color: var(--stock-up);
+  color: var(--stock-up);
+}
+
+/* Plan / Ladder Steps */
+.plan-in {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.plan-in .f {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.plan-in input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  outline: none;
+}
+.plan-in input:focus {
+  border-color: var(--border-focus);
+}
+
+.steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.stp {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  transition: border-color 0.15s;
+}
+.stp:hover {
+  border-color: var(--border-hover);
+}
+.stp .ix {
+  width: 28px;
+  height: 28px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.stp .hd {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.stp .ln {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.stp .ln2 {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  line-height: 1.4;
+}
+.stp .buy {
+  color: #38bdf8;
+  font-weight: 600;
+}
+.stp .capmsg {
+  color: var(--stock-up);
+  font-weight: 600;
+}
+.stp .bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.stp .bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent-gradient);
+  border-radius: 2px;
+}
+
+/* Footer */
+.foot {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 40px;
+  line-height: 1.6;
+}
+
+/* --- v3.2 Enhanced Styles --- */
+.warn { color: #f59e0b !important; font-size: 0.78rem; font-weight: 500; display: inline-block; }
+.ph { color: var(--text-tertiary); font-size: 0.75rem; }
+.ph-only { display: none !important; }
+.empty { color: var(--text-tertiary); text-align: center; padding: 24px 0; font-size: 0.85rem; font-style: italic; }
+.num { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
+.num.up { color: var(--stock-up) !important; }
+.num.down { color: var(--stock-down) !important; }
+
+/* Enhanced Pulse Animation */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 10px var(--accent-primary); }
+  50% { opacity: 0.45; transform: scale(0.85); box-shadow: 0 0 4px var(--accent-primary); }
+}
+.insight-pulse {
+  animation: pulseGlow 2.2s infinite ease-in-out;
+}
+
+/* Dynamic KPI Badges */
+.kpi-badge.up {
+  background: var(--stock-up-bg) !important;
+  color: var(--stock-up) !important;
+  border: 1px solid var(--stock-up-border) !important;
+}
+.kpi-badge.down {
+  background: var(--stock-down-bg) !important;
+  color: var(--stock-down) !important;
+  border: 1px solid var(--stock-down-border) !important;
+}
+.kpi-badge.zero {
+  background: var(--bg-input) !important;
+  color: var(--text-tertiary) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Light Theme Precision Fixes */
+.r-lab {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm);
+}
+.r-lab.k-cur {
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+.r-lab.sm {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.r-line {
+  background: var(--border-hover) !important;
+}
+.r-stem {
+  background: var(--border-hover) !important;
+}
+.r-stem.faint {
+  background: var(--border) !important;
+  opacity: 0.6;
+}
+.stp .bar {
+  background: var(--border) !important;
+}
+.ledger-head {
+  background: var(--bg-input) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.tx-row {
+  border-bottom: 1px solid var(--border) !important;
+}
+.tx-row:hover {
+  background: var(--bg-card-hover) !important;
+}
+
+/* Mobile Responsive Optimization (< 640px) */
+@media (max-width: 640px) {
+  body { padding: 12px 10px 40px; }
+  .app-header { flex-direction: column; align-items: flex-start; gap: 14px; padding: 14px 16px; }
+  .header-actions { width: 100%; display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
+  .header-actions .btn { flex: 1 1 auto; padding: 6px 10px; font-size: 0.78rem; }
+  .kpi-primary { gap: 10px; }
+  .kpi-val { font-size: 2rem; }
+  .hero-stats-grid { grid-template-columns: 1fr; }
+  .ledger-head { grid-template-columns: 58px 1fr 1fr 1fr 28px; }
+  .ledger-head span.c-amt { display: none; }
+  .tx-row { grid-template-columns: 58px 1fr 1fr 1fr 28px; }
+  .tx-row .c-amt { display: none; }
+  .analytics-tabs { flex-direction: column; gap: 4px; }
+  .tab-btn { justify-content: flex-start; padding: 8px 12px; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">📊</div>
+      <div class="brand-title">
+        <h1>股票摊平计算器 <span class="badge-pro">ULTIMATE v3.2</span></h1>
+        <p>专业级持仓盈亏分析 · 目标成本测算 · 极限阶梯补仓推演</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btnExample" type="button">💡 载入示例</button>
+      <button class="btn" id="btnClear" type="button">🧹 清空</button>
+      <button class="btn btn-ghost" id="btnCopyReport" type="button" title="一键复制诊断与持仓报告">📋 复制报告</button>
+      <button class="btn btn-ghost" id="btnTheme" type="button" title="切换主题">🌓 切换主题</button>
+    </div>
+  </header>
+
+  <!-- Hero Dashboard: Core KPIs -->
+  <section class="hero-dashboard" id="pResult" aria-live="polite">
+    <div class="kpi-card">
+      <div class="kpi-meta">
+        <div class="kpi-label">
+          <span>持仓浮动盈亏</span>
+          <small id="feeNote" hidden>（已扣预估卖出费）</small>
+        </div>
+        <small id="sampleNote" hidden style="color: #f59e0b; font-weight: 600;">⚡ 示例数据模式</small>
+      </div>
+      <div class="kpi-primary">
+        <div class="kpi-val" id="hPl">—</div>
+        <div class="kpi-badge" id="hPct">—</div>
+      </div>
+      <div class="kpi-sub" id="hCost">总成本: —</div>
+    </div>
+
+    <div class="hero-stats-grid">
+      <div class="stat-box">
+        <div class="s-label">每股持仓成本价</div>
+        <div class="s-val" id="hAvg">—</div>
+        <div class="s-sub">根据加权平均算法结转</div>
+      </div>
+      <div class="stat-box">
+        <div class="s-label">当前现价 / 参考价</div>
+        <div class="s-val" id="displayCurPrice">—</div>
+        <div class="s-sub">点击左侧随时修改</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Real-time Insight Diagnostic Bar -->
+  <div class="insight-bar">
+    <div class="insight-pulse"></div>
+    <div class="sentence" id="sSentence">正在计算持仓状态...</div>
+  </div>
+
+  <!-- Main Two-Column Workspace -->
+  <div class="workspace">
+    <!-- Left Column: Transactions & Inputs -->
+    <div class="workspace-left">
+      <div class="panel-card" id="pLedger">
+        <div class="panel-header">
+          <div class="panel-title"><span class="num-badge">1</span> 买卖流水记录</div>
+          <button class="btn btn-primary btn-sm" id="btnAdd" type="button">+ 添加一笔</button>
+        </div>
+
+        <!-- Current Price Strip -->
+        <div class="cur-control-bar">
+          <span class="cur-tag">当前股价 (元)</span>
+          <input id="cur" type="number" inputmode="decimal" step="any" min="0" placeholder="默认自动取最后一笔">
+          <button class="btn btn-sm btn-ghost" id="btnCurReset" type="button" hidden>重置</button>
+        </div>
+        <div class="cur-note" id="curNote"></div>
+
+        <!-- Ledger Table -->
+        <div class="ledger-container">
+          <div class="ledger-head">
+            <span>方向</span><span>成交价</span><span>股数</span><span>金额</span><span>后成本</span><span>操作</span>
+          </div>
+          <div id="txBody"></div>
+        </div>
+
+        <!-- Collapsible Settings Drawer -->
+        <div class="settings-drawer">
+          <button class="settings-toggle" type="button" id="btnToggleSettings">
+            <span>⚙️ 费率与整手设置</span>
+            <span id="settingsArrow">▼</span>
+          </button>
+          <div class="settings-content" id="settingsBox" style="display:none;">
+            <div style="margin-bottom: 12px;">
+              <label class="check-item" for="feeOn">
+                <input id="feeOn" type="checkbox">
+                <span>计入交易费用与印花税</span>
+              </label>
+              <div class="fee-grid" id="feeFields" hidden>
+                <div class="input-field">
+                  <label for="br">买入佣金率 (%)</label>
+                  <input id="br" type="number" inputmode="decimal" step="any" min="0">
+                </div>
+                <div class="input-field">
+                  <label for="sr">卖出费率 (佣金+印花税 %)</label>
+                  <input id="sr" type="number" inputmode="decimal" step="any" min="0">
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px dashed var(--border); padding-top: 10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label class="check-item" for="lotOn">
+                  <input id="lotOn" type="checkbox">
+                  <span>补仓按整手取整</span>
+                </label>
+                <div id="lotFields" style="display:flex; align-items:center; gap:6px; font-size:0.78rem;">
+                  <span>每手</span>
+                  <input id="lot" type="number" inputmode="numeric" step="1" min="1" style="width:56px; padding:3px 6px; border-radius:4px; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary);">
+                  <span>股</span>
+                </div>
+              </div>
+              <p class="note-text">打勾后，测算出的补仓股数向上取整到整手（例如 103 股取整为 200 股）。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Analytics, Ruler & Simulation Tabs -->
+    <div class="workspace-right">
+      <!-- Tab Navigation -->
+      <div class="analytics-tabs">
+        <button class="tab-btn active" data-tab="tab-status" type="button">📈 现状指标与标尺</button>
+        <button class="tab-btn" data-tab="tab-whatif" type="button">🎯 单笔补仓测算 (What-If)</button>
+        <button class="tab-btn" data-tab="tab-plan" type="button">🪜 极限阶梯推演 (DCA)</button>
+      </div>
+
+      <!-- Tab 1: Current Status & Price Ruler -->
+      <div class="tab-pane active" id="tab-status">
+        <div class="panel-card">
+          <div class="rule-wrap">
+            <h3>价格定位标尺</h3>
+            <div id="ruler"></div>
+            <p class="legend">💡 蓝点为现价，空心圈为回本线，下方微点为历史成交买卖点。绿色区间代表距回本线差距，红色代表已实现超额盈利。</p>
+          </div>
+
+          <div class="panel-title" style="margin-top:20px; font-size:0.9rem;">📊 持仓全景快览</div>
+          <div class="tiles" id="tiles"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: What-If Single Round Analysis -->
+      <div class="tab-pane" id="tab-whatif">
+        <div class="panel-card" id="pWhatif">
+          <div class="panel-header">
+            <div class="panel-title"><span class="num-badge">3</span> 再补一笔会怎样？</div>
+          </div>
+
+          <div class="seg" role="group" aria-label="试算方式">
+            <button type="button" id="modeTarget" aria-pressed="true">我想摊到某个目标成本</button>
+            <button type="button" id="modeShares" aria-pressed="false">我打算补指定股数</button>
+          </div>
+
+          <div class="wi-grid">
+            <div class="f">
+              <label for="wiPrice">拟补仓价格 (元/股)</label>
+              <input id="wiPrice" type="number" inputmode="decimal" step="any" min="0">
+            </div>
+            <div class="f" id="lbTarget">
+              <label for="wiTarget">期望摊到的成本价 (元)</label>
+              <input id="wiTarget" type="number" inputmode="decimal" step="any" min="0">
+            </div>
+            <div class="f" id="lbShares" hidden>
+              <label for="wiShares">打算补仓股数 (股)</label>
+              <input id="wiShares" type="number" inputmode="numeric" step="any" min="0">
+            </div>
+            <div class="f">
+              <label for="wiRebound">反弹假设目标价 (元，可选)</label>
+              <input id="wiRebound" type="number" inputmode="decimal" step="any" min="0">
+            </div>
+          </div>
+
+          <div class="callout" id="wiMsg" hidden></div>
+          <div class="tiles" id="wiTiles"></div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Multi-round DCA Ladder Plan -->
+      <div class="tab-pane" id="tab-plan">
+        <div class="panel-card" id="pPlan">
+          <div class="panel-header">
+            <div class="panel-title"><span class="num-badge">4</span> 极端行情一路补仓推演</div>
+          </div>
+
+          <div class="plan-in">
+            <div class="f">
+              <label for="plLoss">单轮亏损容忍上限 (%)</label>
+              <input id="plLoss" type="number" inputmode="decimal" step="any" min="0">
+            </div>
+            <div class="f">
+              <label for="plDrop">假设每轮下跌 (%)</label>
+              <input id="plDrop" type="number" inputmode="decimal" step="any" min="0">
+            </div>
+            <div class="f">
+              <label for="plRounds">往下推演轮数 (1-12)</label>
+              <input id="plRounds" type="number" inputmode="numeric" step="1" min="1" max="12">
+            </div>
+            <div class="f">
+              <label for="plBudget">备用补仓预算上限 (元)</label>
+              <input id="plBudget" type="number" inputmode="decimal" step="any" min="0" placeholder="留空为不限资金">
+            </div>
+          </div>
+
+          <div class="callout" id="plMsg" hidden></div>
+          <ol class="steps" id="plSteps"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">
+    红涨绿跌：遵循中国 A 股标准色彩规范。成本价按真实加权平均法结转。所有计算仅供交易参考，不构成投资建议。
+  </p>
+</div>
+
+<script>
+// Tab Switching & Theme Toggle logic
+document.addEventListener('DOMContentLoaded', () => {
+  // Tabs
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-tab');
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabPanes.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(targetId).classList.add('active');
+      window.dispatchEvent(new Event('resize'));
+    });
+  });
+
+  // Theme Toggle
+  const btnTheme = document.getElementById('btnTheme');
+  btnTheme.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('calc-theme', next); } catch(e){}
+  });
+  try {
+    const savedTheme = localStorage.getItem('calc-theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+  } catch(e){}
+
+  // Settings Drawer Toggle
+  const btnToggleSettings = document.getElementById('btnToggleSettings');
+  const settingsBox = document.getElementById('settingsBox');
+  const settingsArrow = document.getElementById('settingsArrow');
+  btnToggleSettings.addEventListener('click', () => {
+    const isHidden = settingsBox.style.display === 'none';
+    settingsBox.style.display = isHidden ? 'block' : 'none';
+    settingsArrow.textContent = isHidden ? '▲' : '▼';
+  });
+
+  // Sync displayCurPrice whenever cur changes
+  const curInput = document.getElementById('cur');
+  const displayCurPrice = document.getElementById('displayCurPrice');
+  const syncDisplayCur = () => {
+    const v = curInput.value;
+    displayCurPrice.textContent = v ? parseFloat(v).toFixed(2) + ' 元' : '自动取最近笔';
+  };
+  curInput.addEventListener('input', syncDisplayCur);
+  syncDisplayCur();
+  setInterval(syncDisplayCur, 500);
+});
+</script>
+
+<script>
+
+/*PURE-START*/
+const num = v => { const n = parseFloat(v); return isFinite(n) && n > 0 ? n : 0; };
+
+function run(tx, feeOn, br, sr) {
+  const b = feeOn ? num(br) / 100 : 0;
+  const s = feeOn ? num(sr) / 100 : 0;
+  let shares = 0, cost = 0, realized = 0;
+  const rows = [];
+  tx.forEach(t => {
+    const p = num(t.price);
+    let n = num(t.shares);
+    if (!p || !n) { rows.push({ valid: false }); return; }
+    if (t.side === 'sell') {
+      let warn = false;
+      if (n > shares + 1e-9) { n = shares; warn = true; }
+      if (n <= 0) { rows.push({ valid: true, side: 'sell', none: true, warn: true, n: 0, amount: 0, fee: 0, pl: 0, sharesAfter: 0, avgAfter: 0 }); return; }
+      const avg = cost / shares;
+      const amount = p * n;
+      const fee = amount * s;
+      const pl = amount - fee - avg * n;
+      realized += pl;
+      cost -= avg * n;
+      shares -= n;
+      if (shares < 1e-9) { shares = 0; cost = 0; }
+      rows.push({ valid: true, side: 'sell', amount, fee, pl, n, warn, sharesAfter: shares, avgAfter: shares ? cost / shares : 0 });
+    } else {
+      const amount = p * n;
+      const fee = amount * b;
+      cost += amount + fee;
+      shares += n;
+      rows.push({ valid: true, side: 'buy', amount, fee, n, sharesAfter: shares, avgAfter: cost / shares });
+    }
+  });
+  return { shares, cost, realized, avg: shares ? cost / shares : 0, rows, b, s };
+}
+
+function metrics(res, cur) {
+  const mv = cur * res.shares;
+  const fee = mv * res.s;
+  const floating = res.shares && cur ? mv - fee - res.cost : 0;
+  const be = res.shares ? res.avg / (1 - res.s) : 0;
+  return {
+    shares: res.shares, cost: res.cost, avg: res.avg, mv, floating,
+    pct: res.cost ? floating / res.cost : 0,
+    be, need: cur && be ? be / cur - 1 : 0
+  };
+}
+
+function sharesToTarget(res, p, T) {
+  const pe = p * (1 + res.b);
+  if (!(T < res.avg) || !(pe < T) || !res.shares) return null;
+  return Math.ceil((T * res.shares - res.cost) / (pe - T) - 1e-9);
+}
+function plan(tx, feeOn, br, sr, p0, L, d, k, lot, budget) {
+  const unit = lot > 1 ? lot : 1;
+  const steps = [];
+  const list = tx.slice();
+  let res = run(list, feeOn, br, sr);
+  let price = p0, invest = 0;
+  for (let i = 0; i <= k; i++) {
+    if (i > 0) price = Math.max(0.01, Math.round(price * (1 - d) * 100) / 100);
+    const lossBefore = res.shares ? (res.avg - price) / res.avg : 0;
+    let n = 0, cap = false;
+    if (res.shares && lossBefore > L + 1e-9) {
+      n = sharesToTarget(res, price, price / (1 - L)) || 0;
+      if (n > 0 && unit > 1) n = Math.ceil(n / unit) * unit;
+      const per = price * (1 + res.b);
+      if (n > 0 && budget > 0 && invest + per * n > budget + 1e-9) {
+        n = Math.floor(Math.max(0, budget - invest) / per / unit) * unit;
+        cap = true;
+      }
+    }
+    let spend = 0;
+    if (n > 0) {
+      spend = price * n * (1 + res.b);
+      list.push({ side: 'buy', price: String(price), shares: String(n) });
+      res = run(list, feeOn, br, sr);
+      invest += spend;
+    }
+    steps.push({
+      i, price, lossBefore, n, spend, invest, cap,
+      shares: res.shares, cost: res.cost, avg: res.avg,
+      lossAfter: res.shares ? (res.avg - price) / res.avg : 0,
+      lossAmt: res.shares ? Math.max(0, (res.avg - price) * res.shares) : 0,
+      rebound: res.shares ? res.avg / (1 - res.s) / price - 1 : 0
+    });
+    if (cap) break;
+  }
+  return steps;
+}
+/*PURE-END*/
+
+(function () {
+  const $ = id => document.getElementById(id);
+  const KEY = 'stock-averaging-calc-v2';
+
+  const example = () => ({
+    sample: true, cur: '', feeOn: false, br: '0.025', sr: '0.075', lotOn: true, lot: '100',
+    tx: [{ side: 'buy', price: '100', shares: '100' }, { side: 'buy', price: '90', shares: '200' }],
+    wi: { mode: 'target', price: '80', shares: '300', target: '90', rebound: '90' },
+    plan: { loss: '10', drop: '5', rounds: '4', budget: '20000' }
+  });
+  const blank = () => ({
+    sample: false, cur: '', feeOn: false, br: '0.025', sr: '0.075', lotOn: true, lot: '100',
+    tx: [{ side: 'buy', price: '', shares: '' }],
+    wi: { mode: 'target', price: '', shares: '', target: '', rebound: '' },
+    plan: { loss: '10', drop: '5', rounds: '4', budget: '' }
+  });
+
+  let S = null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const o = JSON.parse(raw);
+      if (o && Array.isArray(o.tx) && o.tx.length && o.wi) S = o;
+    }
+  } catch (e) {}
+  if (!S) S = example();
+  if (!S.plan) S.plan = { loss: '10', drop: '5', rounds: '4', budget: '' };
+  if (S.plan.budget === undefined) S.plan.budget = '';
+  if (S.wi.rebound === undefined) S.wi.rebound = '';
+  if (S.lot === undefined) { S.lot = '100'; S.lotOn = true; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+  const fm = n => n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const p3 = n => n.toLocaleString('zh-CN', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  const sh = n => n.toLocaleString('zh-CN', { maximumFractionDigits: 4 });
+  const sg = n => Math.abs(n) < 0.005 ? fm(0) : (n > 0 ? '+' : '-') + fm(Math.abs(n));
+  const sp = n => Math.abs(n) < 0.00005 ? '0.00%' : (n > 0 ? '+' : '-') + (Math.abs(n) * 100).toFixed(2) + '%';
+  const cls = n => Math.abs(n) < 0.005 ? 'zero' : (n > 0 ? 'up' : 'down');
+  const setText = (el, text, c) => { el.textContent = text; if (c) el.className = el.className.replace(/\b(up|down|zero)\b/g, '').trim() + ' ' + c; };
+
+  function lastPrice() {
+    for (let i = S.tx.length - 1; i >= 0; i--) {
+      const p = num(S.tx[i].price);
+      if (p && num(S.tx[i].shares)) return p;
+    }
+    return 0;
+  }
+  const curPrice = () => num(S.cur) || lastPrice();
+  const lotUnit = () => S.lotOn ? (Math.floor(num(S.lot)) || 100) : 0;
+
+  function syncInputs() {
+    $('feeOn').checked = !!S.feeOn;
+    $('feeFields').hidden = !S.feeOn;
+    $('br').value = S.br;
+    $('sr').value = S.sr;
+    $('wiPrice').value = S.wi.price;
+    $('wiShares').value = S.wi.shares;
+    $('wiTarget').value = S.wi.target;
+    $('cur').value = S.cur;
+    $('plLoss').value = S.plan.loss;
+    $('plDrop').value = S.plan.drop;
+    $('plRounds').value = S.plan.rounds;
+    $('plBudget').value = S.plan.budget;
+    $('wiRebound').value = S.wi.rebound;
+    $('lotOn').checked = !!S.lotOn;
+    $('lot').value = S.lot;
+    $('lotFields').hidden = !S.lotOn;
+    $('sampleNote').hidden = !S.sample;
+    syncMode();
+  }
+  function syncMode() {
+    const t = S.wi.mode !== 'shares';
+    $('modeTarget').setAttribute('aria-pressed', t);
+    $('modeShares').setAttribute('aria-pressed', !t);
+    $('lbTarget').hidden = !t;
+    $('lbShares').hidden = t;
+  }
+
+  function renderRows() {
+    const body = $('txBody');
+    body.innerHTML = '';
+    S.tx.forEach(t => {
+      const row = document.createElement('div');
+      row.className = 'tx-row';
+      row.innerHTML =
+        '<select class="side" aria-label="方向"><option value="buy">买入</option><option value="sell">卖出</option></select>' +
+        '<input class="price" type="number" inputmode="decimal" step="any" min="0" placeholder="价格" aria-label="价格">' +
+        '<input class="shares" type="number" inputmode="numeric" step="any" min="0" placeholder="股数" aria-label="股数">' +
+        '<div class="cell c-amt"></div><div class="cell c-avg"></div>' +
+        '<button class="del" type="button" aria-label="删除这一笔">×</button>' +
+        '<div class="tx-info"></div>';
+      row.querySelector('.side').value = t.side;
+      row.querySelector('.price').value = t.price;
+      row.querySelector('.shares').value = t.shares;
+      body.appendChild(row);
+    });
+  }
+
+  function tile(label, value, was, c) {
+    return '<div class="tile"><div class="k">' + label + '</div><div class="v ' + (c || '') + '">' + value + '</div>' +
+      (was ? '<div class="was">' + was + '</div>' : '') + '</div>';
+  }
+
+  function renderResult(res, m, cur) {
+    $('feeNote').hidden = !S.feeOn;
+    if (!res.shares) {
+      setText($('hPl'), '已清仓', 'zero'); setText($('hPct'), '', 'zero');
+      setText($('hAvg'), '—'); setText($('hCost'), '');
+    } else if (!cur) {
+      setText($('hPl'), '—', 'zero'); setText($('hPct'), '请先填写现价', 'zero');
+      setText($('hAvg'), p3(res.avg)); setText($('hCost'), '总成本 ' + fm(res.cost));
+    } else {
+      const c = cls(m.floating);
+      setText($('hPl'), sg(m.floating), c); setText($('hPct'), sp(m.pct), c);
+      setText($('hAvg'), p3(res.avg)); setText($('hCost'), '总成本 ' + fm(res.cost));
+    }
+
+    let s = '';
+    if (!res.shares) s = '目前没有持仓。';
+    else if (!cur) s = '填好现价后，这里会告诉你离回本还差多少。';
+    else if (cur >= m.be) s = '现价 ' + fm(cur) + ' 已经高于回本价 ' + p3(m.be) + '，当前不亏。';
+    else s = '现价 ' + fm(cur) + '，要涨到 ' + p3(m.be) + ' 才回本，还需上涨 ' + (m.need * 100).toFixed(2) + '%。';
+    $('sSentence').textContent = s;
+
+    let t = '';
+    if (res.shares) {
+      t += tile('持股数', sh(res.shares));
+      t += tile('当前市值', cur ? fm(m.mv) : '—');
+      t += tile('回本价', p3(m.be));
+    }
+    const hasSell = res.rows.some(r => r.valid && r.side === 'sell' && !r.none);
+    if (hasSell) {
+      t += tile('已卖出部分盈亏', sg(res.realized), '', cls(res.realized));
+      if (cur || !res.shares) {
+        const tot = res.realized + m.floating;
+        t += tile('合计盈亏（卖出+持仓）', sg(tot), '', cls(tot));
+      }
+    }
+    $('tiles').innerHTML = t;
+  }
+
+  function renderLedger(res, cur) {
+    document.querySelectorAll('#txBody .tx-row').forEach((el, i) => {
+      const r = res.rows[i], info = el.querySelector('.tx-info');
+      const amt = el.querySelector('.c-amt'), avg = el.querySelector('.c-avg');
+      amt.innerHTML = ''; avg.innerHTML = '';
+      info.classList.remove('ph-only');
+      if (!r || !r.valid) {
+        info.classList.add('ph-only');
+        info.innerHTML = '<span class="ph">填写价格和股数后，这里显示这一笔的结果。</span>';
+        return;
+      }
+      if (r.none) {
+        amt.textContent = '—'; avg.textContent = '—';
+        info.innerHTML = '<span class="warn">当时没有持仓可卖，这一笔不计入。</span>';
+        return;
+      }
+      amt.innerHTML = fm(r.amount) + (r.side === 'sell' ? '<small class="' + cls(r.pl) + '">盈亏 ' + sg(r.pl) + '</small>' : '');
+      avg.textContent = r.sharesAfter ? p3(r.avgAfter) : '—';
+      let s = '<span class="ph">' + (r.side === 'sell' ? '卖出 ' : '买入 ') + '<span class="num">' + fm(r.amount) + '</span>';
+      if (r.fee > 0) s += ' · 费用 <span class="num">' + fm(r.fee) + '</span>';
+      if (r.side === 'sell') s += ' · 本笔盈亏 <span class="num ' + cls(r.pl) + '">' + sg(r.pl) + '</span>';
+      s += ' · 之后持 <span class="num">' + sh(r.sharesAfter) + '</span> 股';
+      if (r.sharesAfter) s += '，成本价 <span class="num">' + p3(r.avgAfter) + '</span>';
+      s += '</span>';
+      if (r.warn) { s += ' <span class="warn">卖出股数超过当时持仓，已按 ' + sh(r.n) + ' 股计算。</span>'; }
+      else info.classList.add('ph-only');
+      info.innerHTML = s;
+      if (r.warn) info.classList.remove('ph-only');
+    });
+    const last = lastPrice();
+    $('curNote').textContent = num(S.cur)
+      ? '已手动设置，盈亏按这个价格计算。'
+      : (last ? '默认取最近一笔的价格，盈亏按它计算，可以直接改。' : '填好上面的记录后，默认取最近一笔的价格。');
+    $('cur').placeholder = last ? String(last) : '现价';
+    $('btnCurReset').hidden = !num(S.cur);
+  }
+
+  function renderWhatIf(res, m, cur) {
+    const w = S.wi, p = num(w.price), T = num(w.target), R = num(w.rebound), lot = lotUnit();
+    const msg = $('wiMsg'), tiles = $('wiTiles');
+    let n = 0, text = '', bad = false, rounded = false;
+    $('wiPrice').placeholder = cur ? String(cur) : '补仓价';
+
+    if (!res.shares) { text = '先在上面录入持仓，再来试算。'; bad = true; }
+    else if (w.mode === 'shares') {
+      n = num(w.shares);
+      if (!p || !n) text = '填好补仓价格和股数，就能看到补仓后的变化。';
+    } else {
+      if (!p || !T) text = '填好补仓价格和想摊到的成本价，就能算出至少要补多少股。';
+      else if (T >= res.avg) { text = '想摊到的成本价要低于现在的成本价 ' + p3(res.avg) + '。'; bad = true; }
+      else if (p * (1 + res.b) >= T) { text = '补仓价格不低于想摊到的成本价，怎么补都摊不到。请降低目标，或换一个更低的补仓价。'; bad = true; }
+      else {
+        n = sharesToTarget(res, p, T);
+        if (n && lot > 1) { const r = Math.ceil(n / lot) * lot; rounded = r !== n; n = r; }
+      }
+    }
+
+    if (!n || !p || !res.shares) {
+      msg.hidden = !text; msg.textContent = text; msg.className = 'callout' + (bad ? ' bad' : '');
+      tiles.innerHTML = '';
+      return null;
+    }
+    const after = run(S.tx.concat([{ side: 'buy', price: String(p), shares: String(n) }]), S.feeOn, S.br, S.sr);
+    const spend = p * n * (1 + res.b);
+    const m0 = metrics(res, p), ma = metrics(after, p);
+
+    if (w.mode === 'shares') {
+      text = '在 ' + fm(p) + ' 补 ' + sh(n) + ' 股，需要投入 ' + fm(spend) + ' 元，成本价从 ' + p3(res.avg) + ' 变成 ' + p3(after.avg) + '。';
+      if (lot > 1 && n % lot) text += ' 注意：' + sh(n) + ' 股不是整手，实际买入要取 ' + lot + ' 的整数倍。';
+    } else {
+      text = '在 ' + fm(p) + ' 补仓，至少再买 ' + sh(n) + ' 股' + (rounded ? '（已按整手向上取整）' : '') + '，需要投入 ' + fm(spend) + ' 元，成本价可以从 ' + p3(res.avg) + ' 降到 ' + p3(after.avg) + '。';
+    }
+    msg.hidden = false; msg.textContent = text; msg.className = 'callout';
+
+    const need = x => p >= x.be ? '已越过回本价' : '+' + (x.need * 100).toFixed(2) + '%';
+    const pl = (x) => '<span class="num ' + cls(x.floating) + '">' + sg(x.floating) + '</span>';
+    let h = '';
+    h += tile('补仓后成本价', p3(after.avg), '现在 <span class="num">' + p3(res.avg) + '</span>');
+    h += tile('补仓后持股', sh(after.shares), '现在 <span class="num">' + sh(res.shares) + '</span>');
+    h += tile('补仓后总成本', fm(after.cost), '现在 <span class="num">' + fm(res.cost) + '</span>');
+    h += tile('补仓后回本价', p3(ma.be), '现在 <span class="num">' + p3(m0.be) + '</span>');
+    h += tile('从 ' + fm(p) + ' 反弹到回本价需涨', need(ma), '不补仓要涨 <span class="num">' + need(m0) + '</span>');
+    h += tile('股价在 ' + fm(p) + ' 时的浮动盈亏', sg(ma.floating), '不补仓 ' + pl(m0), cls(ma.floating));
+    if (R) {
+      const mr0 = metrics(res, R), mra = metrics(after, R);
+      h += tile('反弹到 ' + fm(R) + ' 时的盈亏', sg(mra.floating), '不补仓 ' + pl(mr0), cls(mra.floating));
+    }
+    tiles.innerHTML = h;
+    return null;
+  }
+
+  function renderRuler(res, m, cur) {
+    const box = $('ruler');
+    if (!cur || !res.shares) {
+      box.innerHTML = '<p class="empty">填好买卖记录后，这里会显示价格位置。</p>';
+      return;
+    }
+    const W = box.clientWidth || 320;
+    const above = [{ v: cur, t: '现价', k: 'cur' }, { v: m.avg, t: '成本', k: 'avg' }];
+    if (Math.abs(m.be - m.avg) > 0.0005) above.push({ v: m.be, t: '回本', k: 'be' });
+    const below = [];
+    const seen = {};
+    S.tx.forEach(t => {
+      const p = num(t.price);
+      if (!p || !num(t.shares)) return;
+      const key = t.side + p;
+      if (seen[key]) return;
+      seen[key] = 1;
+      below.push({ v: p, t: (t.side === 'sell' ? '卖 ' : '买 ') + p.toFixed(2), k: t.side });
+    });
+    const wp = num(S.wi.price);
+    if (wp) below.push({ v: wp, t: '拟补 ' + wp.toFixed(2), k: 'wi' });
+    above.forEach(i => { i.t = i.t + ' ' + i.v.toFixed(2); });
+
+    const vals = above.concat(below).map(x => x.v);
+    let mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    if (mx - mn < 1e-9) { mn -= 1; mx += 1; }
+    const pad = (mx - mn) * 0.22;
+    const lo = mn - pad, hi = mx + pad;
+    const X = v => (v - lo) / (hi - lo) * W;
+    const lay = list => {
+      list.forEach(i => { i.x = X(i.v); });
+      list.sort((a, b) => a.x - b.x);
+      const last = [];
+      list.forEach(i => {
+        let l = 0;
+        while (last[l] !== undefined && i.x - last[l] < 100) l++;
+        i.l = l; last[l] = i.x;
+      });
+      return last.length;
+    };
+    const nA = lay(above), nB = lay(below);
+    const lineY = nA ? 32 + (nA - 1) * 22 : 10;
+    const H = lineY + (nB ? 14 + (nB - 1) * 22 + 22 : 10);
+
+    const desc = '价格位置：现价 ' + cur.toFixed(2) + '，成本价 ' + m.avg.toFixed(2) + '，回本价 ' + m.be.toFixed(2);
+    let h = '<div class="ruler" role="img" aria-label="' + desc + '" style="height:' + H + 'px">';
+    h += '<div class="r-line" style="top:' + (lineY - 1) + 'px"></div>';
+    const a = Math.min(X(cur), X(m.be)), b = Math.max(X(cur), X(m.be));
+    if (b - a > 1) h += '<div class="r-band ' + (m.be > cur ? 'down' : 'up') + '" style="left:' + a + 'px;width:' + (b - a) + 'px;top:' + (lineY - 3) + 'px"></div>';
+    above.forEach(i => {
+      const top = lineY - 32 - i.l * 22;
+      h += '<div class="r-stem" style="left:' + i.x + 'px;top:' + (top + 18) + 'px;height:' + (lineY - top - 18) + 'px"></div>';
+      h += '<div class="r-lab k-' + i.k + '" style="left:' + i.x + 'px;top:' + top + 'px">' + i.t + '</div>';
+    });
+    below.forEach(i => {
+      const top = lineY + 14 + i.l * 22;
+      h += '<div class="r-stem faint" style="left:' + i.x + 'px;top:' + lineY + 'px;height:' + (top - lineY) + 'px"></div>';
+      h += '<div class="r-lab sm k-' + i.k + '" style="left:' + i.x + 'px;top:' + top + 'px">' + i.t + '</div>';
+      h += '<div class="r-dot sm" style="left:' + i.x + 'px;top:' + lineY + 'px"></div>';
+    });
+    above.forEach(i => {
+      h += '<div class="r-dot k-' + i.k + '" style="left:' + i.x + 'px;top:' + lineY + 'px"></div>';
+    });
+    h += '</div>';
+    box.innerHTML = h;
+  }
+
+  function renderPlan(res, cur) {
+    const L = num(S.plan.loss) / 100, d = num(S.plan.drop) / 100;
+    const k = Math.min(12, Math.floor(num(S.plan.rounds)));
+    const budget = num(S.plan.budget), lot = lotUnit();
+    const msg = $('plMsg'), list = $('plSteps');
+    const stop = t => { msg.hidden = false; msg.className = 'callout bad'; msg.textContent = t; list.innerHTML = ''; };
+    if (!res.shares) return stop('先在上面录入持仓，再来推演。');
+    if (!cur) return stop('先填好现价，推演从现价开始。');
+    if (!(L > 0 && L < 1)) return stop('亏损上限请填 0 到 100 之间的数，比如 10。');
+    if (!(d > 0 && d < 1)) return stop('每轮再跌请填 0 到 100 之间的数，比如 5。');
+    if (!(k >= 1)) return stop('往下推几轮请填 1 到 12。');
+
+    const st = plan(S.tx, S.feeOn, S.br, S.sr, cur, L, d, k, lot, budget);
+    const maxCost = Math.max.apply(null, st.map(s => s.cost).concat([res.cost]));
+    const lastS = st[st.length - 1];
+    const bought = st.reduce((a, s) => a + s.n, 0);
+    const lp = (L * 100).toFixed(L * 100 % 1 ? 1 : 0);
+    const dp = (d * 100).toFixed(d * 100 % 1 ? 1 : 0);
+
+    msg.hidden = false;
+    msg.className = 'callout';
+    if (lastS.cap) {
+      msg.textContent = '预算 ' + fm(budget) + ' 元用完了：跌到 ' + fm(lastS.price) + ' 时' + (lastS.n ? '只能再补 ' + sh(lastS.n) + ' 股' : '已经补不了') +
+        '，此时亏损 ' + (lastS.lossAfter * 100).toFixed(1) + '%（上限是 ' + lp + '%），浮亏约 ' + fm(lastS.lossAmt) + ' 元。一共补了 ' + sh(bought) + ' 股，投入 ' + fm(lastS.invest) + ' 元。更低的价位不再推演。';
+    } else if (!bought) {
+      msg.textContent = '按每轮再跌 ' + dp + '% 推 ' + k + ' 轮，价格到 ' + fm(lastS.price) + ' 时亏损也没超过 ' + lp + '%，用不着补仓。';
+    } else {
+      msg.textContent = '一路跌到 ' + fm(lastS.price) + '，要保持亏损不超过 ' + lp + '%，一共要补 ' + sh(bought) + ' 股，再投入 ' + fm(lastS.invest) +
+        ' 元，总成本从 ' + fm(res.cost) + ' 涨到 ' + fm(lastS.cost) + '（约 ' + (lastS.cost / res.cost).toFixed(1) + ' 倍），此时浮亏约 ' + fm(lastS.lossAmt) +
+        ' 元。亏损比例压住了，但亏损金额和投入的钱会越滚越大。';
+    }
+
+    list.innerHTML = st.map(s => {
+      const hd = s.i === 0 ? '现价 ' + fm(s.price) : '再跌 ' + dp + '% 到 ' + fm(s.price);
+      const before = s.lossBefore > 0.00005 ? '此时亏损 ' + (s.lossBefore * 100).toFixed(1) + '%' : '此时没有亏损';
+      let ln;
+      if (s.cap) {
+        ln = before + '，超过 ' + lp + '%，' + (s.n > 0
+          ? '预算只够补 <span class="buy">' + sh(s.n) + ' 股</span>（花 <span class="num">' + fm(s.spend) + '</span>），亏损只能回到 <span class="num">' + (s.lossAfter * 100).toFixed(1) + '%</span>'
+          : '<span class="capmsg">预算已用完，补不了</span>');
+      } else if (s.n > 0) {
+        ln = before + '，超过 ' + lp + '%，补 <span class="buy">' + sh(s.n) + ' 股</span>（花 <span class="num">' + fm(s.spend) + '</span>），补完亏损回到 <span class="num">' + (s.lossAfter * 100).toFixed(1) + '%</span>，成本价 <span class="num">' + p3(s.avg) + '</span>';
+      } else {
+        ln = before + '，没超过 ' + lp + '%，不用补';
+      }
+      const ln2 = '持股 <span class="num">' + sh(s.shares) + '</span> · 总成本 <span class="num">' + fm(s.cost) + '</span> · 累计再投入 <span class="num">' + fm(s.invest) +
+        '</span> · 涨回回本价需反弹 <span class="num">' + (s.rebound > 0 ? (s.rebound * 100).toFixed(1) + '%' : '0%') + '</span>';
+      return '<li class="stp"><div class="ix">' + (s.i + 1) + '</div><div><div class="hd">' + hd + '</div><div class="ln">' + ln + '</div><div class="ln2">' + ln2 +
+        '</div><div class="bar" aria-hidden="true"><i style="width:' + Math.max(2, s.cost / maxCost * 100).toFixed(1) + '%"></i></div></div></li>';
+    }).join('');
+  }
+
+  function update() {
+    const cur = curPrice();
+    const res = run(S.tx, S.feeOn, S.br, S.sr);
+    const m = metrics(res, cur);
+    renderLedger(res, cur);
+    renderResult(res, m, cur);
+    renderRuler(res, m, cur);
+    renderWhatIf(res, m, cur);
+    renderPlan(res, cur);
+  }
+
+  function touch() {
+    S.sample = false;
+    $('sampleNote').hidden = true;
+    save();
+    update();
+  }
+
+  $('cur').addEventListener('input', e => { S.cur = e.target.value; touch(); });
+  $('btnCurReset').addEventListener('click', () => { S.cur = ''; $('cur').value = ''; touch(); });
+  $('feeOn').addEventListener('change', e => { S.feeOn = e.target.checked; $('feeFields').hidden = !S.feeOn; touch(); });
+  $('br').addEventListener('input', e => { S.br = e.target.value; touch(); });
+  $('sr').addEventListener('input', e => { S.sr = e.target.value; touch(); });
+  $('wiPrice').addEventListener('input', e => { S.wi.price = e.target.value; touch(); });
+  $('wiShares').addEventListener('input', e => { S.wi.shares = e.target.value; touch(); });
+  $('wiTarget').addEventListener('input', e => { S.wi.target = e.target.value; touch(); });
+  $('plLoss').addEventListener('input', e => { S.plan.loss = e.target.value; touch(); });
+  $('plDrop').addEventListener('input', e => { S.plan.drop = e.target.value; touch(); });
+  $('plRounds').addEventListener('input', e => { S.plan.rounds = e.target.value; touch(); });
+  $('plBudget').addEventListener('input', e => { S.plan.budget = e.target.value; touch(); });
+  $('wiRebound').addEventListener('input', e => { S.wi.rebound = e.target.value; touch(); });
+  $('lotOn').addEventListener('change', e => { S.lotOn = e.target.checked; $('lotFields').hidden = !S.lotOn; touch(); });
+  $('lot').addEventListener('input', e => { S.lot = e.target.value; touch(); });
+  let rz = null;
+  window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(update, 120); });
+  $('modeTarget').addEventListener('click', () => { S.wi.mode = 'target'; syncMode(); touch(); });
+  $('modeShares').addEventListener('click', () => { S.wi.mode = 'shares'; syncMode(); touch(); });
+
+  const body = $('txBody');
+  const idx = el => Array.prototype.indexOf.call(body.children, el.closest('.tx-row'));
+  body.addEventListener('input', e => {
+    const i = idx(e.target); if (i < 0) return;
+    if (e.target.classList.contains('price')) S.tx[i].price = e.target.value;
+    else if (e.target.classList.contains('shares')) S.tx[i].shares = e.target.value;
+    touch();
+  });
+  body.addEventListener('change', e => {
+    if (!e.target.classList.contains('side')) return;
+    const i = idx(e.target); if (i < 0) return;
+    S.tx[i].side = e.target.value;
+    touch();
+  });
+  body.addEventListener('click', e => {
+    const btn = e.target.closest('.del');
+    if (!btn) return;
+    const i = idx(btn); if (i < 0) return;
+    S.tx.splice(i, 1);
+    if (!S.tx.length) S.tx.push({ side: 'buy', price: '', shares: '' });
+    renderRows();
+    touch();
+  });
+  $('btnAdd').addEventListener('click', () => {
+    S.tx.push({ side: 'buy', price: '', shares: '' });
+    renderRows();
+    touch();
+    const rows = body.querySelectorAll('.tx-row');
+    const last = rows[rows.length - 1];
+    if (last) last.querySelector('.price').focus();
+  });
+
+  $('btnClear').addEventListener('click', () => { S = blank(); save(); syncInputs(); renderRows(); update(); });
+  $('btnExample').addEventListener('click', () => { S = example(); save(); syncInputs(); renderRows(); update(); });
+
+
+  
+  // --- v3.2 Addon Logic ---
+  // Auto-expand settings if fee is enabled
+  if (S && S.feeOn && typeof settingsBox !== 'undefined') {
+    settingsBox.style.display = 'block';
+    if (typeof settingsArrow !== 'undefined') settingsArrow.textContent = '▲';
+  }
+
+  // Copy diagnostic report
+  const btnCopy = $('btnCopyReport');
+  if (btnCopy) {
+    btnCopy.addEventListener('click', () => {
+      const cur = curPrice();
+      const res = run(S.tx, S.feeOn, S.br, S.sr);
+      const m = metrics(res, cur);
+      if (!res.shares) { alert('当前暂无持仓记录'); return; }
+      const text = [
+        '【📊 股票持仓与摊平推演简报】',
+        '• 参考现价: ' + (cur ? fm(cur) + ' 元' : '未设置'),
+        '• 持仓均价: ' + p3(res.avg) + ' 元',
+        '• 保本价格: ' + p3(m.be) + ' 元',
+        '• 持股总量: ' + sh(res.shares) + ' 股 (当前市值: ' + (cur ? fm(m.mv) + ' 元' : '—') + ')',
+        '• 持仓总成本: ' + fm(res.cost) + ' 元',
+        '• 浮动盈亏: ' + (cur ? (sg(m.floating) + ' 元 (' + sp(m.pct) + ')') : '—'),
+        '• 回本状态: ' + (cur ? (cur >= m.be ? '✅ 已实现回本/超额盈利' : '⚠️ 需反弹 ' + (m.need * 100).toFixed(2) + '% 才能回本') : '待录入现价'),
+        '• 诊断建议: ' + ($('sSentence') ? $('sSentence').textContent : '')
+      ].join('\n');
+
+      navigator.clipboard.writeText(text).then(() => {
+        const origin = btnCopy.textContent;
+        btnCopy.textContent = '✅ 已复制到剪贴板';
+        setTimeout(() => { btnCopy.textContent = origin; }, 2000);
+      }).catch(() => {
+        alert('复制失败，请手动截图或复制。');
+      });
+    });
+  }
+
+  // Global Keyboard Shortcuts (Ctrl+N to add row)
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      $('btnAdd').click();
+    }
+  });
+
+  syncInputs();
+  renderRows();
+  update();
+})();
+
+</script>
+</body>
+</html>
